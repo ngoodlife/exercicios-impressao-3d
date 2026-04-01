@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>064 – Comutador | Design para Impressão 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f1;--surf:#fff;--ink:#1a1814;--muted:#6b6860;--faint:#b5b3ae;
+  --accent:#0077a8;--accent-lt:#e6f3f9;--border:#e2dfd8;--step-bg:#f2f0eb;
+  --code-bg:#eef6fb;--code:#005c80;--kbd-bg:#eaeaea;
+  --ph1:#c1440e;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111010;--surf:#1b1917;--ink:#f0ece4;--muted:#a09d97;--faint:#55524e;
+    --accent:#29a8d8;--accent-lt:#0d2a38;--border:#2c2a27;--step-bg:#201f1c;
+    --code-bg:#0d1f29;--code:#7dd3f5;--kbd-bg:#2a2a2a;
+  }
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;font-size:16px}
+
+/* HEADER */
+header{background:var(--surf);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.hdr{max-width:1100px;margin:0 auto;padding:.9rem 1.5rem;display:flex;align-items:center;gap:1rem;justify-content:space-between}
+.hdr-left{display:flex;align-items:center;gap:.8rem}
+.hdr-logo{height:28px;width:auto}
+.hdr-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hdr-title span{color:var(--accent);font-weight:500}
+.prog-wrap{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.prog-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--faint)}
+.prog-bar{width:100px;height:3px;background:var(--border);border-radius:9px}
+.prog-fill{height:100%;background:var(--accent);border-radius:9px;transition:width .3s}
+
+/* COVER */
+.cover{max-width:1100px;margin:0 auto;padding:3rem 1.5rem 2.5rem;display:grid;grid-template-columns:1fr auto;gap:2.5rem;align-items:center}
+@media(max-width:680px){.cover{grid-template-columns:1fr;padding:2rem 1.2rem}}
+.cover-text .eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem}
+.cover-text h1{font-family:'Fraunces',serif;font-size:clamp(2.4rem,5vw,3.6rem);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:.5rem}
+.cover-text h1 em{font-style:italic;font-weight:300;color:var(--muted)}
+.cover-text .sub{font-size:1rem;color:var(--muted);margin-bottom:1.8rem;max-width:440px}
+.meta-row{display:flex;flex-wrap:wrap;gap:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.meta-item .ml{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.meta-item .mv{font-size:14px;font-weight:500}
+.cover-img img{width:260px;max-width:100%;border-radius:12px}
+
+/* OBJ */
+.obj{max-width:1100px;margin:0 auto;padding:0 1.5rem 2.5rem}
+.obj-box{background:var(--step-bg);border-radius:12px;padding:1.4rem 1.6rem}
+.obj-box h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin-bottom:.9rem}
+.obj-box ul{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+.obj-box li{font-size:14px;color:var(--muted);display:flex;gap:.5rem}
+.obj-box li::before{content:'→';color:var(--accent);flex-shrink:0}
+
+/* PHASE LABEL */
+.phase{max-width:1100px;margin:0 auto;padding:1rem 1.5rem .5rem}
+.phase-label{display:flex;align-items:center;gap:.8rem}
+.phase-label span{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:4px}
+.phase-label.model span{background:var(--accent-lt);color:var(--accent)}
+.phase-label.print span{background:#f0f7ee;color:#2d6a4f}
+@media(prefers-color-scheme:dark){.phase-label.print span{background:#0d1f15;color:#52b788}}
+.phase-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* SECTIONS */
+.sec{max-width:1100px;margin:0 auto;padding:.5rem 1.5rem 1.5rem;display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start}
+@media(max-width:800px){.sec{grid-template-columns:1fr;padding:.5rem 1.2rem 1.5rem}}
+
+/* STEPS */
+.sec-steps{display:flex;flex-direction:column;gap:.9rem}
+.step{background:var(--surf);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.step-hd{display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1.1rem;border-bottom:1px solid var(--border)}
+.sn{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:300;font-style:italic;color:var(--accent);line-height:1;flex-shrink:0;min-width:1.5rem}
+.st{font-size:.88rem;font-weight:500;padding-top:.3rem;line-height:1.3}
+.scmds{list-style:none;padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:.35rem}
+.scmds li{font-size:13px;color:var(--muted);display:flex;align-items:flex-start;gap:.5rem;line-height:1.5}
+.scmds li::before{content:'·';color:var(--faint);flex-shrink:0}
+code{font-family:'DM Mono',monospace;font-size:11.5px;background:var(--code-bg);color:var(--code);padding:1px 5px;border-radius:4px}
+kbd{font-family:'DM Mono',monospace;font-size:11px;background:var(--kbd-bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+em{color:var(--ink)}
+strong{font-weight:500}
+
+/* SLIDE IMAGE */
+.sec-img{position:sticky;top:60px}
+@media(max-width:800px){.sec-img{position:static}}
+.slide-label{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem}
+.sec-img img{width:100%;border-radius:10px;border:1px solid var(--border)}
+
+/* TOC */
+.toc-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 1rem}
+.toc-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;margin-bottom:1rem}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.4rem}
+.toc-item{display:flex;flex-direction:column;gap:2px;padding:.5rem .8rem;border-radius:8px;border:1px solid var(--border);background:var(--surf);text-decoration:none;font-size:12px;font-family:'DM Mono',monospace;color:var(--faint);transition:border-color .15s,color .15s}
+.toc-item:hover{border-color:var(--accent);color:var(--accent)}
+.toc-item span{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);font-weight:400}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);margin-top:3rem;padding:1.5rem;text-align:center;font-size:12px;color:var(--faint);font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="hdr-left">
+      <img src="imgs/image1.png" alt="CENFIM" class="hdr-logo">
+      <div class="hdr-title">Design para Impressão 3D &nbsp;/&nbsp; <span>064 – Comutador</span></div>
+    </div>
+    <div class="prog-wrap">
+      <span class="prog-label" id="prog-pct">0%</span>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+</header>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-text">
+    <div class="eyebrow">Ciclo Projeto e Design para Impressão 3D</div>
+    <h1>064 – <em>Comutador</em></h1>
+    <p class="sub">Modelar, exportar e imprimir um comutador de múltiplas peças usando o Fusion 360 e o PrusaSlicer.</p>
+    <div class="meta-row">
+      <div class="meta-item"><div class="ml">Duração</div><div class="mv">3 horas</div></div>
+      <div class="meta-item"><div class="ml">Etapas</div><div class="mv">47</div></div>
+      <div class="meta-item"><div class="ml">Software</div><div class="mv">Fusion 360 + PrusaSlicer</div></div>
+      <div class="meta-item"><div class="ml">Autor</div><div class="mv">Nuno Boavida, 06/2025</div></div>
+    </div>
+  </div>
+  <div class="cover-img"><img src="imgs/image2.png" alt="Comutador 3D"></div>
+</div>
+
+<!-- OBJECTIVOS -->
+<div class="obj">
+  <div class="obj-box">
+    <h2>Objetivos</h2>
+    <ul>
+      <li>Modelar o conjunto de peças apresentado recorrendo ao Fusion 360</li>
+      <li>Imprimir e montar as peças</li>
+      <li>Produzir um ficheiro STL final otimizado para fabrico aditivo</li>
+      <li>Compreender o fluxo completo: design → exportação → impressão</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc-wrap">
+  <div class="toc-title">Índice de etapas</div>
+  <div class="toc-grid"><a href="#sec-1" class="toc-item">Etapa 1<span>Criar o primeiro sólido</span></a>
+<a href="#sec-2" class="toc-item">Etapa 2<span>Alterar a cor do objeto</span></a>
+<a href="#sec-3" class="toc-item">Etapa 3<span>Criar o primeiro furo</span></a>
+<a href="#sec-4" class="toc-item">Etapa 4<span>Extrudir o furo</span></a>
+<a href="#sec-5" class="toc-item">Etapa 5<span>Criar o segundo contorno</span></a>
+<a href="#sec-6" class="toc-item">Etapa 6<span>Extrudir o segundo sólido</span></a>
+<a href="#sec-7" class="toc-item">Etapa 7<span>Criar cópia com Mirror</span></a>
+<a href="#sec-8" class="toc-item">Etapa 8<span>Juntar sólidos com Combine</span></a>
+<a href="#sec-9" class="toc-item">Etapa 9<span>Criar corte com Combine</span></a>
+<a href="#sec-10" class="toc-item">Etapa 10<span>Criar folga nas paredes</span></a>
+<a href="#sec-11" class="toc-item">Etapa 11<span>Criar novo contorno</span></a>
+<a href="#sec-12" class="toc-item">Etapa 12<span>Extrudir até ao objeto</span></a>
+<a href="#sec-13" class="toc-item">Etapa 13<span>Criar novo contorno</span></a>
+<a href="#sec-14" class="toc-item">Etapa 14<span>Extrudir novo sólido</span></a>
+<a href="#sec-15" class="toc-item">Etapa 15<span>Criar cópia com Mirror</span></a>
+<a href="#sec-16" class="toc-item">Etapa 16<span>Juntar sólidos com Combine</span></a>
+<a href="#sec-17" class="toc-item">Etapa 17<span>Extrudir até objeto</span></a>
+<a href="#sec-18" class="toc-item">Etapa 18<span>Criar folga nas paredes</span></a>
+<a href="#sec-19" class="toc-item">Etapa 19<span>Criar chanfros</span></a>
+<a href="#sec-20" class="toc-item">Etapa 20<span>Criar novo contorno</span></a>
+<a href="#sec-21" class="toc-item">Etapa 21<span>Extrudir até objeto</span></a>
+<a href="#sec-22" class="toc-item">Etapa 22<span>Criar novo contorno</span></a>
+<a href="#sec-23" class="toc-item">Etapa 23<span>Extrudir novo sólido</span></a>
+<a href="#sec-24" class="toc-item">Etapa 24<span>Alterar a cor do objeto</span></a>
+<a href="#sec-25" class="toc-item">Etapa 25<span>Criar folga nas paredes</span></a>
+<a href="#sec-26" class="toc-item">Etapa 26<span>Criar novo contorno</span></a>
+<a href="#sec-27" class="toc-item">Etapa 27<span>Extrudir até objeto</span></a>
+<a href="#sec-28" class="toc-item">Etapa 28<span>Criar novo contorno</span></a>
+<a href="#sec-29" class="toc-item">Etapa 29<span>Extrudir novo sólido</span></a>
+<a href="#sec-30" class="toc-item">Etapa 30<span>Aplicar fillet</span></a>
+<a href="#sec-31" class="toc-item">Etapa 31<span>Criar folga nas paredes</span></a>
+<a href="#sec-32" class="toc-item">Etapa 32<span>Aplicar fillet</span></a>
+<a href="#sec-33" class="toc-item">Etapa 33<span>Extrudir paredes</span></a>
+<a href="#sec-34" class="toc-item">Etapa 34<span>Criar chanfros</span></a>
+<a href="#sec-35" class="toc-item">Etapa 35<span>Aplicar fillet</span></a>
+<a href="#sec-36" class="toc-item">Etapa 36<span>Aplicar fillet</span></a>
+<a href="#sec-37" class="toc-item">Etapa 37<span>Fazer cópia com Move/Copy</span></a>
+<a href="#sec-38" class="toc-item">Etapa 38<span>Alterar a cor do objeto</span></a>
+<a href="#sec-39" class="toc-item">Etapa 39<span>Rodar e mover o sólido</span></a>
+<a href="#sec-40" class="toc-item">Etapa 40<span>Extrudir paredes</span></a>
+<a href="#sec-41" class="toc-item">Etapa 41<span>Criar chanfros</span></a>
+<a href="#sec-42" class="toc-item">Etapa 42<span>Exportar STL</span></a>
+<a href="#sec-43" class="toc-item">Etapa 43<span>Importar no PrusaSlicer</span></a>
+<a href="#sec-44" class="toc-item">Etapa 44<span>Separar objetos</span></a>
+<a href="#sec-45" class="toc-item">Etapa 45<span>Organizar objetos</span></a>
+<a href="#sec-46" class="toc-item">Etapa 46<span>Posicionar peças</span></a>
+<a href="#sec-47" class="toc-item">Etapa 47<span>Gerar G-Code</span></a>
+</div>
+</div>
+
+<!-- FASE MODELAÇÃO -->
+<div class="phase"><div class="phase-label model"><span>Fase 1 — Modelação no Fusion 360</span></div></div>
+<section class="sec" id="sec-1">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">1</span>
+    <span class="st">Criar o primeiro sólido</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch no <strong>TOP PLANE</strong></li><li>Desenhar o contorno apresentado</li><li>Criar um sólido através do comando <code>Create &gt; Extrude</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">2</span>
+    <span class="st">Alterar a cor do objeto</span>
+  </div>
+  <ul class="scmds"><li>Abrir o menu <code>Modify &gt; Appearance</code></li><li>Selecionar <em>Fusion 360 Appearances &gt; Paint &gt; Metallic &gt; Yellow</em></li><li>O comando também pode ser acedido com a tecla <kbd>A</kbd></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">3</span>
+    <span class="st">Criar o primeiro furo</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar a circunferência apresentada</li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 1–3</span>
+    <img src="slide-02.jpg" alt="Etapas 1–3" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-4">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">4</span>
+    <span class="st">Extrudir o furo</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">5</span>
+    <span class="st">Criar o segundo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">6</span>
+    <span class="st">Extrudir o segundo sólido</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Operation = New Body</em></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 4–6</span>
+    <img src="slide-03.jpg" alt="Etapas 4–6" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-7">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">7</span>
+    <span class="st">Criar cópia com Mirror</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Mirror</code> em torno do <strong>RIGHT PLANE</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">8</span>
+    <span class="st">Juntar sólidos com Combine</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Combine</code> com <em>Operation = Join</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">9</span>
+    <span class="st">Criar corte com Combine</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Combine</code> com <em>Operation = Cut</em></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 7–9</span>
+    <img src="slide-04.jpg" alt="Etapas 7–9" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-10">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">10</span>
+    <span class="st">Criar folga nas paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">11</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">12</span>
+    <span class="st">Extrudir até ao objeto</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Extend Type = To Object</em></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 10–12</span>
+    <img src="slide-05.jpg" alt="Etapas 10–12" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-13">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">13</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">14</span>
+    <span class="st">Extrudir novo sólido</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Operation = New Body</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">15</span>
+    <span class="st">Criar cópia com Mirror</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Mirror</code> em torno do <strong>RIGHT PLANE</strong></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 13–15</span>
+    <img src="slide-06.jpg" alt="Etapas 13–15" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-16">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">16</span>
+    <span class="st">Juntar sólidos com Combine</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Combine</code> com <em>Operation = Join</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">17</span>
+    <span class="st">Extrudir até objeto</span>
+  </div>
+  <ul class="scmds"><li>Selecionar a face indicada e utilizar o comando <code>Create &gt; Extrude</code> com <em>Extend Type = To Object</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">18</span>
+    <span class="st">Criar folga nas paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 16–18</span>
+    <img src="slide-07.jpg" alt="Etapas 16–18" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-19">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">19</span>
+    <span class="st">Criar chanfros</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Chamfer</code></li><li>Chamfer = <strong>0.3 mm</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">20</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">21</span>
+    <span class="st">Extrudir até objeto</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Extend Type = To Object</em></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 19–21</span>
+    <img src="slide-08.jpg" alt="Etapas 19–21" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-22">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">22</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">23</span>
+    <span class="st">Extrudir novo sólido</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Operation = New Body</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">24</span>
+    <span class="st">Alterar a cor do objeto</span>
+  </div>
+  <ul class="scmds"><li>Abrir o menu <code>Modify &gt; Appearance</code></li><li>Selecionar <em>Fusion 360 Appearances &gt; Paint &gt; Metallic &gt; Yellow</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">25</span>
+    <span class="st">Criar folga nas paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 22–25</span>
+    <img src="slide-09.jpg" alt="Etapas 22–25" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-26">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">26</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">27</span>
+    <span class="st">Extrudir até objeto</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Extend Type = To Object</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">28</span>
+    <span class="st">Criar novo contorno</span>
+  </div>
+  <ul class="scmds"><li>Criar um sketch na face indicada</li><li>Desenhar o contorno apresentado</li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 26–28</span>
+    <img src="slide-10.jpg" alt="Etapas 26–28" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-29">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">29</span>
+    <span class="st">Extrudir novo sólido</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Create &gt; Extrude</code> com <em>Extend Type = To Object</em> e <em>Operation = New Body</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">30</span>
+    <span class="st">Aplicar fillet</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Fillet</code></li><li>R = <strong>1.5 mm</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">31</span>
+    <span class="st">Criar folga nas paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">32</span>
+    <span class="st">Aplicar fillet</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Fillet</code></li><li>R = <strong>3 mm</strong></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 29–32</span>
+    <img src="slide-11.jpg" alt="Etapas 29–32" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-33">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">33</span>
+    <span class="st">Extrudir paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">34</span>
+    <span class="st">Criar chanfros</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Chamfer</code></li><li>Chamfer = <strong>1 mm</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">35</span>
+    <span class="st">Aplicar fillet</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Fillet</code></li><li>R = <strong>3 mm</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">36</span>
+    <span class="st">Aplicar fillet</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Fillet</code></li><li>R = <strong>2 mm</strong></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 33–36</span>
+    <img src="slide-12.jpg" alt="Etapas 33–36" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-37">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">37</span>
+    <span class="st">Fazer cópia com Move/Copy</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Move/Copy</code></li><li>Selecionar o centro da face cilíndrica</li><li>Selecionar <em>Move Type = Free Move</em></li><li>Ativar a opção <em>Create Copy</em></li><li>Rodar o sólido pelo eixo X</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">38</span>
+    <span class="st">Alterar a cor do objeto</span>
+  </div>
+  <ul class="scmds"><li>Abrir o menu <code>Modify &gt; Appearance</code></li><li>Selecionar <em>Fusion 360 Appearances &gt; Paint &gt; Metallic &gt; Yellow</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">39</span>
+    <span class="st">Rodar e mover o sólido</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Move/Copy</code></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">40</span>
+    <span class="st">Extrudir paredes</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Offset Face</code></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 37–40</span>
+    <img src="slide-13.jpg" alt="Etapas 37–40" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-41">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">41</span>
+    <span class="st">Criar chanfros</span>
+  </div>
+  <ul class="scmds"><li>Utilizar o comando <code>Modify &gt; Chamfer</code></li><li>Chamfer = <strong>1 mm</strong></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">42</span>
+    <span class="st">Exportar STL</span>
+  </div>
+  <ul class="scmds"><li>No Browser clicar com o botão direito no nome do ficheiro</li><li>Selecionar <em>Save As Mesh</em></li><li>As peças estão modeladas! ✓</li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 41–42</span>
+    <img src="slide-14.jpg" alt="Etapas 41–42" loading="lazy">
+  </div>
+</section>
+
+<!-- FASE IMPRESSÃO -->
+<div class="phase" style="margin-top:1rem"><div class="phase-label print"><span>Fase 2 — Impressão 3D</span></div></div>
+<section class="sec" id="sec-43">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">43</span>
+    <span class="st">Importar no PrusaSlicer</span>
+  </div>
+  <ul class="scmds"><li>Abrir o PrusaSlicer e adicionar o ficheiro exportado</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">44</span>
+    <span class="st">Separar objetos</span>
+  </div>
+  <ul class="scmds"><li>Clicar com o botão direito e selecionar <em>Split &gt; To Objects</em></li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">45</span>
+    <span class="st">Organizar objetos</span>
+  </div>
+  <ul class="scmds"><li>Clicar com o botão direito e selecionar <em>Arrange</em></li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 43–45</span>
+    <img src="slide-16.jpg" alt="Etapas 43–45" loading="lazy">
+  </div>
+</section>
+<section class="sec" id="sec-46">
+  <div class="sec-steps"><div class="step">
+  <div class="step-hd">
+    <span class="sn">46</span>
+    <span class="st">Posicionar peças</span>
+  </div>
+  <ul class="scmds"><li>Clicar em <em>Place On Face</em> e posicionar as peças corretamente</li></ul>
+</div>
+<div class="step">
+  <div class="step-hd">
+    <span class="sn">47</span>
+    <span class="st">Gerar G-Code</span>
+  </div>
+  <ul class="scmds"><li>Fazer o slice e exportar o ficheiro para a impressora</li></ul>
+</div></div>
+  <div class="sec-img">
+    <span class="slide-label">Etapas 46–47</span>
+    <img src="slide-17.jpg" alt="Etapas 46–47" loading="lazy">
+  </div>
+</section>
+
+<footer>CENFIM Marinha Grande &nbsp;·&nbsp; Ciclo Projeto e Design para Impressão 3D &nbsp;·&nbsp; 064 – Comutador &nbsp;·&nbsp; Nuno Boavida 06/2025</footer>
+
+<script>
+const total = 47;
+function updateProgress() {
+  const checks = document.querySelectorAll('.step-done');
+  const done = checks.length;
+  const secs = document.querySelectorAll('.sec');
+  let visible = 0;
+  secs.forEach(s => {
+    const r = s.getBoundingClientRect();
+    if(r.top < window.innerHeight * 0.5) visible = parseInt(s.id.split('-')[1]) || visible;
+  });
+  const pct = Math.round((visible / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+window.addEventListener('scroll', updateProgress, {passive:true});
+updateProgress();
+</script>
+</body>
+</html>
